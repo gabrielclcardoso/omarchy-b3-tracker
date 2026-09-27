@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gcorreia.b3-tracker",
+  "name": "B3 Tracker",
+  "version": "1.0.0",
+  "author": "Antigravity",
+  "description": "Monitor de ações e FIIs da B3 com variação por janela de tempo e ticker na barra",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "B3 Tracker",
+    "description": "Monitor de ativos da B3 com ticker rotativo e painel de variação",
+    "category": "Finance",
+    "allowMultiple": false
+  }
+}
