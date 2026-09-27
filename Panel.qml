@@ -143,7 +143,7 @@ Panel {
     open: root.opened
     centerOnBar: true
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(540))
+    contentWidth: panel.fittedContentWidth(Style.space(520))
     contentHeight: panel.fittedContentHeight(Style.space(640))
 
     PanelKeyCatcher {
@@ -172,6 +172,8 @@ Panel {
 
             Column {
               anchors.left: parent.left
+              anchors.right: headerActionsRow.left
+              anchors.rightMargin: Style.space(8)
               anchors.verticalCenter: parent.verticalCenter
               spacing: Style.space(2)
 
@@ -217,11 +219,14 @@ Panel {
                 color: Color.muted
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: Style.font.caption
+                elide: Text.ElideRight
+                width: parent.width
               }
             }
 
             // Action buttons on top right
             Row {
+              id: headerActionsRow
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
               spacing: Style.space(6)
@@ -367,79 +372,14 @@ Panel {
               }
             }
 
-            // ---- Category Tabs + Sort
+            // ---- Category Tabs + Sort (with overflow protection)
             Item {
               width: parent.width
               height: Style.space(28)
 
-              // Dynamic Category Filter
-              Row {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Style.space(6)
-
-                Repeater {
-                  model: root.availableCategories
-
-                  delegate: MouseArea {
-                    required property string modelData
-                    readonly property bool isSelected: mainWidget && mainWidget.activeCategory === modelData
-                    width: catText.implicitWidth + Style.space(12)
-                    height: Style.space(24)
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-
-                    onClicked: if (mainWidget) mainWidget.activeCategory = modelData
-
-                    Rectangle {
-                      anchors.fill: parent
-                      radius: Style.space(4)
-                      color: isSelected ? Color.background : "transparent"
-                      border.color: isSelected ? Color.accent : "transparent"
-                      border.width: 1
-
-                      Text {
-                        id: catText
-                        anchors.centerIn: parent
-                        text: modelData
-                        color: isSelected ? Color.accent : (parent.parent.containsMouse ? Color.foreground : Color.muted)
-                        font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                        font.pixelSize: Style.font.caption
-                        font.bold: isSelected
-                      }
-                    }
-                  }
-                }
-
-                // Quick add / manage button at end of tabs
-                MouseArea {
-                  width: Style.space(24)
-                  height: Style.space(24)
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.currentView = "manage"
-
-                  Rectangle {
-                    anchors.fill: parent
-                    radius: Style.space(4)
-                    color: parent.containsMouse ? Style.hoverStateColor(Color.background, Color.accent) : "transparent"
-                    border.color: Color.muted
-                    border.width: 1
-                    opacity: 0.7
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "+"
-                      color: Color.accent
-                      font.bold: true
-                      font.pixelSize: Style.font.body
-                    }
-                  }
-                }
-              }
-
               // Sort Toggle on the right
               MouseArea {
+                id: sortArea
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 width: sortRow.implicitWidth + Style.space(8)
@@ -468,6 +408,84 @@ Panel {
                     color: Color.muted
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.caption
+                  }
+                }
+              }
+
+              // Dynamic Category Filter (Scrollable flickable so it never collides with sortArea)
+              Flickable {
+                anchors.left: parent.left
+                anchors.right: sortArea.left
+                anchors.rightMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                height: Style.space(28)
+                contentWidth: catRow.implicitWidth
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                Row {
+                  id: catRow
+                  spacing: Style.space(6)
+                  anchors.verticalCenter: parent.verticalCenter
+
+                  Repeater {
+                    model: root.availableCategories
+
+                    delegate: MouseArea {
+                      required property string modelData
+                      readonly property bool isSelected: mainWidget && mainWidget.activeCategory === modelData
+                      width: catText.implicitWidth + Style.space(12)
+                      height: Style.space(24)
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+
+                      onClicked: if (mainWidget) mainWidget.activeCategory = modelData
+
+                      Rectangle {
+                        anchors.fill: parent
+                        radius: Style.space(4)
+                        color: isSelected ? Color.background : "transparent"
+                        border.color: isSelected ? Color.accent : "transparent"
+                        border.width: 1
+
+                        Text {
+                          id: catText
+                          anchors.centerIn: parent
+                          text: modelData
+                          color: isSelected ? Color.accent : (parent.parent.containsMouse ? Color.foreground : Color.muted)
+                          font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                          font.pixelSize: Style.font.caption
+                          font.bold: isSelected
+                        }
+                      }
+                    }
+                  }
+
+                  // Quick add / manage button at end of tabs
+                  MouseArea {
+                    width: Style.space(24)
+                    height: Style.space(24)
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.currentView = "manage"
+
+                    Rectangle {
+                      anchors.fill: parent
+                      radius: Style.space(4)
+                      color: parent.containsMouse ? Style.hoverStateColor(Color.background, Color.accent) : "transparent"
+                      border.color: Color.muted
+                      border.width: 1
+                      opacity: 0.7
+
+                      Text {
+                        anchors.centerIn: parent
+                        text: "+"
+                        color: Color.accent
+                        font.bold: true
+                        font.pixelSize: Style.font.body
+                      }
+                    }
                   }
                 }
               }
@@ -700,10 +718,10 @@ Panel {
 
             Keys.onEscapePressed: root.currentView = "market"
 
-            // Card 1: Add Asset Form
+            // Card 1: Add Asset Form (Multi-row, guaranteed zero horizontal overflow)
             Rectangle {
               width: parent.width
-              height: addAssetCol.implicitHeight + Style.space(16)
+              height: addAssetCol.implicitHeight + Style.space(20)
               radius: Style.space(6)
               color: Color.background
               border.color: Color.accent
@@ -726,71 +744,43 @@ Panel {
                   font.bold: true
                 }
 
-                // Input fields row
-                Row {
+                // Row 1: Ticker, Name (flex-width), and Salvar button
+                Item {
                   width: parent.width
-                  spacing: Style.space(8)
+                  height: Style.space(30)
 
-                  TextField {
-                    id: tickerInput
-                    width: Style.space(100)
-                    placeholderText: "PETR4"
-                    font.capitalization: Font.AllUppercase
-                    maximumLength: 8
-                    Keys.onReturnPressed: addBtnArea.submit()
-                  }
-
-                  TextField {
-                    id: nameInput
-                    width: Style.space(150)
-                    placeholderText: "Nome (opcional)"
-                    Keys.onReturnPressed: addBtnArea.submit()
-                  }
-
-                  // Target category selector chips
                   Row {
-                    spacing: Style.space(4)
+                    id: addInputsRow
+                    anchors.left: parent.left
+                    anchors.right: addBtnArea.left
+                    anchors.rightMargin: Style.space(8)
                     anchors.verticalCenter: parent.verticalCenter
+                    spacing: Style.space(8)
 
-                    Repeater {
-                      model: root.configuredCategories
+                    TextField {
+                      id: tickerInput
+                      width: Style.space(110)
+                      placeholderText: "PETR4"
+                      font.capitalization: Font.AllUppercase
+                      maximumLength: 8
+                      Keys.onReturnPressed: addBtnArea.submit()
+                    }
 
-                      delegate: MouseArea {
-                        required property string modelData
-                        readonly property bool isTarget: root.effectiveTargetCategory === modelData
-                        width: catChipText.implicitWidth + Style.space(10)
-                        height: Style.space(26)
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.targetCategory = modelData
-
-                        Rectangle {
-                          anchors.fill: parent
-                          radius: Style.space(4)
-                          color: isTarget ? Color.accent : (parent.containsMouse ? Style.hoverStateColor(Color.background, Color.accent) : "transparent")
-                          border.color: isTarget ? Color.accent : Color.muted
-                          border.width: 1
-
-                          Text {
-                            id: catChipText
-                            anchors.centerIn: parent
-                            text: modelData
-                            color: isTarget ? Color.background : Color.foreground
-                            font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                            font.pixelSize: Style.font.caption * 0.9
-                            font.bold: isTarget
-                          }
-                        }
-                      }
+                    TextField {
+                      id: nameInput
+                      width: parent.width - tickerInput.width - parent.spacing
+                      placeholderText: "Nome da empresa (opcional)"
+                      Keys.onReturnPressed: addBtnArea.submit()
                     }
                   }
 
-                  // Submit button
+                  // Submit button - pinned securely to the right edge of the card
                   MouseArea {
                     id: addBtnArea
+                    anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: addBtnRect.width
-                    height: Style.space(26)
+                    height: Style.space(28)
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     function submit() {
@@ -805,8 +795,8 @@ Panel {
 
                     Rectangle {
                       id: addBtnRect
-                      width: addBtnLabel.implicitWidth + Style.space(14)
-                      height: Style.space(26)
+                      width: addBtnLabel.implicitWidth + Style.space(18)
+                      height: Style.space(28)
                       radius: Style.space(4)
                       color: tickerInput.text.trim().length > 0 ? Color.accent : Color.muted
                       opacity: tickerInput.text.trim().length > 0 ? (parent.containsMouse ? 0.9 : 1.0) : 0.4
@@ -823,28 +813,89 @@ Panel {
                     }
                   }
                 }
+
+                // Row 2: Target category selector (horizontally scrollable flickable)
+                Row {
+                  width: parent.width
+                  spacing: Style.space(6)
+
+                  Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Adicionar na lista:"
+                    color: Color.muted
+                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                    font.pixelSize: Style.font.caption
+                    font.bold: true
+                  }
+
+                  Flickable {
+                    width: parent.width - x
+                    height: Style.space(26)
+                    contentWidth: catChipsRow.implicitWidth
+                    flickableDirection: Flickable.HorizontalFlick
+                    boundsBehavior: Flickable.StopAtBounds
+                    clip: true
+
+                    Row {
+                      id: catChipsRow
+                      spacing: Style.space(4)
+                      anchors.verticalCenter: parent.verticalCenter
+
+                      Repeater {
+                        model: root.configuredCategories
+
+                        delegate: MouseArea {
+                          required property string modelData
+                          readonly property bool isTarget: root.effectiveTargetCategory === modelData
+                          width: catChipText.implicitWidth + Style.space(12)
+                          height: Style.space(24)
+                          hoverEnabled: true
+                          cursorShape: Qt.PointingHandCursor
+                          onClicked: root.targetCategory = modelData
+
+                          Rectangle {
+                            anchors.fill: parent
+                            radius: Style.space(4)
+                            color: isTarget ? Color.accent : (parent.containsMouse ? Style.hoverStateColor(Color.background, Color.accent) : "transparent")
+                            border.color: isTarget ? Color.accent : Color.muted
+                            border.width: 1
+
+                            Text {
+                              id: catChipText
+                              anchors.centerIn: parent
+                              text: modelData
+                              color: isTarget ? Color.background : Color.foreground
+                              font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                              font.pixelSize: Style.font.caption * 0.9
+                              font.bold: isTarget
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
 
-            // Card 2: Create New List / Category Row
+            // Card 2: Create New List / Category Row (flex-width, zero overflow)
             Rectangle {
               width: parent.width
-              height: Style.space(38)
+              height: Style.space(40)
               radius: Style.space(6)
               color: Color.background
               border.color: Color.muted
               border.width: 1
               opacity: 0.85
 
-              Row {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+              Item {
+                anchors.fill: parent
                 anchors.leftMargin: Style.space(10)
                 anchors.rightMargin: Style.space(10)
-                spacing: Style.space(8)
 
                 Text {
+                  id: newCatLabel
+                  anchors.left: parent.left
                   anchors.verticalCenter: parent.verticalCenter
                   text: "+ Nova Lista:"
                   color: Color.muted
@@ -855,16 +906,21 @@ Panel {
 
                 TextField {
                   id: newCatInput
-                  width: Style.space(200)
+                  anchors.left: newCatLabel.right
+                  anchors.leftMargin: Style.space(8)
+                  anchors.right: createCatArea.left
+                  anchors.rightMargin: Style.space(8)
+                  anchors.verticalCenter: parent.verticalCenter
                   placeholderText: "Ex: Dividendos, Cripto..."
                   Keys.onReturnPressed: createCatArea.submit()
                 }
 
                 MouseArea {
                   id: createCatArea
+                  anchors.right: parent.right
                   anchors.verticalCenter: parent.verticalCenter
                   width: createCatBtn.width
-                  height: Style.space(24)
+                  height: Style.space(26)
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   function submit() {
@@ -878,8 +934,8 @@ Panel {
 
                   Rectangle {
                     id: createCatBtn
-                    width: createCatLabel.implicitWidth + Style.space(12)
-                    height: Style.space(24)
+                    width: createCatLabel.implicitWidth + Style.space(14)
+                    height: Style.space(26)
                     radius: Style.space(4)
                     color: newCatInput.text.trim().length > 0 ? Color.accent : "transparent"
                     border.color: Color.accent
@@ -913,7 +969,7 @@ Panel {
             ListView {
               id: manageList
               width: parent.width
-              height: Style.space(350)
+              height: Style.space(340)
               clip: true
               spacing: Style.space(8)
               boundsBehavior: Flickable.StopAtBounds
@@ -946,6 +1002,8 @@ Panel {
 
                     Row {
                       anchors.left: parent.left
+                      anchors.right: delCatArea.left
+                      anchors.rightMargin: Style.space(8)
                       anchors.verticalCenter: parent.verticalCenter
                       spacing: Style.space(6)
 
@@ -955,6 +1013,7 @@ Panel {
                         font.family: root.bar ? root.bar.fontFamily : Style.font.family
                         font.pixelSize: Style.font.body
                         font.bold: true
+                        elide: Text.ElideRight
                       }
 
                       Text {
@@ -967,6 +1026,7 @@ Panel {
 
                     // Delete Category Button
                     MouseArea {
+                      id: delCatArea
                       anchors.right: parent.right
                       anchors.verticalCenter: parent.verticalCenter
                       width: delCatLabel.implicitWidth + Style.space(8)
@@ -1018,7 +1078,7 @@ Panel {
 
                       delegate: Rectangle {
                         required property var modelData
-                        width: assetChipRow.implicitWidth + Style.space(12)
+                        width: Math.min(assetChipRow.implicitWidth + Style.space(12), parent.width)
                         height: Style.space(24)
                         radius: Style.space(4)
                         color: chipArea.containsMouse ? Style.hoverStateColor(Color.background, Color.accent) : Qt.rgba(1, 1, 1, 0.05)
@@ -1045,7 +1105,7 @@ Panel {
                             font.family: root.bar ? root.bar.fontFamily : Style.font.family
                             font.pixelSize: Style.font.caption * 0.85
                             elide: Text.ElideRight
-                            maximumLineCount: 1
+                            width: Math.min(implicitWidth, Style.space(130))
                           }
 
                           // Delete asset button
