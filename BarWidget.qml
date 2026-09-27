@@ -89,6 +89,11 @@ BarWidget {
     if (panelLoader.item && panelLoader.item.open) panelLoader.item.open()
   }
 
+  function openManage() {
+    if (panelLoader.item && panelLoader.item.openManage) panelLoader.item.openManage()
+    else root.open()
+  }
+
   function close() {
     if (panelLoader.item && panelLoader.item.close) panelLoader.item.close()
   }
@@ -209,6 +214,7 @@ BarWidget {
     function open(): void { root.open() }
     function close(): void { root.close() }
     function toggle(): void { root.togglePanel() }
+    function edit(): void { root.openManage() }
     function addAsset(symbol: string, name: string, category: string): void { root.addAsset(symbol, name, category) }
     function removeAsset(symbol: string, category: string): void { root.removeAsset(symbol, category) }
     function addCategory(category: string): void { root.addCategory(category) }

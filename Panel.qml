@@ -65,6 +65,11 @@ Panel {
     root.controller.show()
   }
 
+  function openManage() {
+    root.currentView = "manage"
+    root.open()
+  }
+
   function openFromHotkey() {
     root.controller.show()
     Qt.callLater(function() {
@@ -749,29 +754,26 @@ Panel {
                   width: parent.width
                   height: Style.space(30)
 
-                  Row {
-                    id: addInputsRow
+                  TextField {
+                    id: tickerInput
                     anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Style.space(100)
+                    placeholderText: "PETR4"
+                    font.capitalization: Font.AllUppercase
+                    maximumLength: 8
+                    Keys.onReturnPressed: addBtnArea.submit()
+                  }
+
+                  TextField {
+                    id: nameInput
+                    anchors.left: tickerInput.right
+                    anchors.leftMargin: Style.space(8)
                     anchors.right: addBtnArea.left
                     anchors.rightMargin: Style.space(8)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: Style.space(8)
-
-                    TextField {
-                      id: tickerInput
-                      width: Style.space(110)
-                      placeholderText: "PETR4"
-                      font.capitalization: Font.AllUppercase
-                      maximumLength: 8
-                      Keys.onReturnPressed: addBtnArea.submit()
-                    }
-
-                    TextField {
-                      id: nameInput
-                      width: parent.width - tickerInput.width - parent.spacing
-                      placeholderText: "Nome da empresa (opcional)"
-                      Keys.onReturnPressed: addBtnArea.submit()
-                    }
+                    placeholderText: "Nome da empresa (opcional)"
+                    Keys.onReturnPressed: addBtnArea.submit()
                   }
 
                   // Submit button - pinned securely to the right edge of the card
