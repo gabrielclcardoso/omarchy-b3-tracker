@@ -68,4 +68,16 @@ omarchy shell gcorreia.b3-tracker next
 
 # Abrir / Fechar o painel dropdown
 omarchy shell gcorreia.b3-tracker toggle
+
+# Adicionar ativo via CLI
+omarchy shell gcorreia.b3-tracker addAsset "PETR4" "Petrobras" "Carteira Ações"
+
+# Remover ativo via CLI
+omarchy shell gcorreia.b3-tracker removeAsset "PETR4" "Carteira Ações"
+
+# Criar nova categoria/lista
+omarchy shell gcorreia.b3-tracker addCategory "Dividendos"
+
+# Excluir categoria/lista
+omarchy shell gcorreia.b3-tracker removeCategory "Dividendos"
 ```
