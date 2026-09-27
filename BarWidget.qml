@@ -160,6 +160,47 @@ BarWidget {
     fetch(false)
   }
 
+  Process {
+    id: editProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        root.fetch(true)
+      }
+    }
+  }
+
+  function addAsset(symbol, name, category) {
+    if (!symbol || !symbol.trim()) return
+    var args = ["python3", root.fetcherPath, "--add-asset", "--symbol", symbol.trim()]
+    if (name && name.trim()) args.push("--name", name.trim())
+    if (category && category.trim()) args.push("--category", category.trim())
+    editProc.command = args
+    editProc.running = true
+  }
+
+  function removeAsset(symbol, category) {
+    if (!symbol || !symbol.trim()) return
+    var args = ["python3", root.fetcherPath, "--remove-asset", "--symbol", symbol.trim()]
+    if (category && category.trim()) args.push("--category", category.trim())
+    editProc.command = args
+    editProc.running = true
+  }
+
+  function addCategory(category) {
+    if (!category || !category.trim()) return
+    var args = ["python3", root.fetcherPath, "--add-category", "--category", category.trim()]
+    editProc.command = args
+    editProc.running = true
+  }
+
+  function removeCategory(category) {
+    if (!category || !category.trim()) return
+    var args = ["python3", root.fetcherPath, "--remove-category", "--category", category.trim()]
+    editProc.command = args
+    editProc.running = true
+  }
+
   IpcHandler {
     target: "gcorreia.b3-tracker"
 
@@ -168,6 +209,10 @@ BarWidget {
     function open(): void { root.open() }
     function close(): void { root.close() }
     function toggle(): void { root.togglePanel() }
+    function addAsset(symbol: string, name: string, category: string): void { root.addAsset(symbol, name, category) }
+    function removeAsset(symbol: string, category: string): void { root.removeAsset(symbol, category) }
+    function addCategory(category: string): void { root.addCategory(category) }
+    function removeCategory(category: string): void { root.removeCategory(category) }
   }
 
   // Standard Omarchy Bar Button with fixed stable width to prevent hover drops

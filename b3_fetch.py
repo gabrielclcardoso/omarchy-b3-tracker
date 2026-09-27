@@ -62,6 +62,93 @@ def load_config():
     return {"defaultWindow": "1mo", "categories": DEFAULT_CATEGORIES}
 
 
+def save_config(config):
+    real_path = os.path.realpath(CONFIG_PATH)
+    os.makedirs(os.path.dirname(real_path), exist_ok=True)
+    with open(real_path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    if os.path.exists(CACHE_DIR):
+        for fname in os.listdir(CACHE_DIR):
+            if fname.startswith("cache_"):
+                try:
+                    os.remove(os.path.join(CACHE_DIR, fname))
+                except Exception:
+                    pass
+
+
+def add_asset(symbol: str, name: str, category: str):
+    symbol = symbol.strip().upper()
+    if symbol.endswith(".SA"):
+        symbol = symbol[:-3]
+    if not symbol:
+        return False
+    name = name.strip() if name else symbol
+    category = category.strip() if category else "Watchlist"
+
+    config = load_config()
+    if "categories" not in config:
+        config["categories"] = {}
+    if category not in config["categories"]:
+        config["categories"][category] = []
+
+    existing = False
+    for item in config["categories"][category]:
+        if item.get("symbol", "").upper() == symbol:
+            item["name"] = name
+            existing = True
+            break
+    if not existing:
+        config["categories"][category].append({"symbol": symbol, "name": name})
+
+    save_config(config)
+    return True
+
+
+def remove_asset(symbol: str, category: str = None):
+    symbol = symbol.strip().upper()
+    if symbol.endswith(".SA"):
+        symbol = symbol[:-3]
+    if not symbol:
+        return False
+
+    config = load_config()
+    categories = config.get("categories", {})
+    if category and category in categories:
+        categories[category] = [i for i in categories[category] if i.get("symbol", "").upper() != symbol]
+    else:
+        for cat in categories:
+            categories[cat] = [i for i in categories[cat] if i.get("symbol", "").upper() != symbol]
+
+    save_config(config)
+    return True
+
+
+def add_category(category: str):
+    category = category.strip()
+    if not category:
+        return False
+    config = load_config()
+    if "categories" not in config:
+        config["categories"] = {}
+    if category not in config["categories"]:
+        config["categories"][category] = []
+        save_config(config)
+    return True
+
+
+def remove_category(category: str):
+    category = category.strip()
+    if not category:
+        return False
+    config = load_config()
+    if "categories" in config and category in config["categories"]:
+        del config["categories"][category]
+        save_config(config)
+    return True
+
+
 def fetch_symbol(symbol: str, name: str, category: str, range_str: str, interval: str):
     sa_symbol = symbol if symbol.endswith(".SA") else f"{symbol}.SA"
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sa_symbol}?range={range_str}&interval={interval}"
@@ -132,7 +219,34 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--window", default="1mo")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--add-asset", action="store_true")
+    parser.add_argument("--remove-asset", action="store_true")
+    parser.add_argument("--add-category", action="store_true")
+    parser.add_argument("--remove-category", action="store_true")
+    parser.add_argument("--symbol", default="")
+    parser.add_argument("--name", default="")
+    parser.add_argument("--category", default="")
     args = parser.parse_args()
+
+    if args.add_asset:
+        success = add_asset(args.symbol, args.name, args.category)
+        print(json.dumps({"success": success}))
+        return
+
+    if args.remove_asset:
+        success = remove_asset(args.symbol, args.category if args.category else None)
+        print(json.dumps({"success": success}))
+        return
+
+    if args.add_category:
+        success = add_category(args.category)
+        print(json.dumps({"success": success}))
+        return
+
+    if args.remove_category:
+        success = remove_category(args.category)
+        print(json.dumps({"success": success}))
+        return
 
     range_str = args.window.lower()
     if range_str not in RANGE_INTERVALS:
@@ -183,6 +297,7 @@ def main():
         "timestamp": int(time.time()),
         "categories": list(categories.keys()),
         "categoryMap": category_map,
+        "rawCategories": categories,
         "assets": results,
     }
 
